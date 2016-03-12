@@ -3,7 +3,7 @@ server:
   port: '9001'
 file:
   fieldName: 'file'
-  maxSize: 1000000 # bytes
+  maxSize: 100 # bytes
 storage:
   root: '/media/tanraya/sandbox/commercial/easywyg/easywyg-fileserver'
   path: 'uploads/%y/%m/%d'

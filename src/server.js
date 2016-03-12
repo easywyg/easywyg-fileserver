@@ -15,15 +15,16 @@
  * - Print API version in /
  */
 
-import express from 'express';
-import multer  from 'multer';
-import mkdirp  from 'mkdirp';
-import uuid    from 'node-uuid';
-import yaml    from 'js-yaml';
-import fs      from 'fs';
-import yargs   from 'yargs';
-import request from 'request';
-import utils   from './utils/common';
+import express    from 'express';
+import multer     from 'multer';
+import mkdirp     from 'mkdirp';
+import uuid       from 'node-uuid';
+import yaml       from 'js-yaml';
+import fs         from 'fs';
+import yargs      from 'yargs';
+import request    from 'request';
+import utils      from './utils/common';
+import bodyParser from 'body-parser';
 
 // Check for --config argument
 const configPath = yargs.argv.config;
@@ -36,6 +37,9 @@ const config = yaml.safeLoad(fs.readFileSync(configPath, 'utf8'));
 const pkg = JSON.parse(fs.readFileSync("./package.json", "utf8"));
 const app = express();
 
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+
 // Fileserver welcome screen
 app.get('/', (req, res) => {
   res.json({ message: `Welcome to Easywyg Fileserver v${pkg.version}` });
@@ -43,14 +47,15 @@ app.get('/', (req, res) => {
 
 // Copy image from remote server to local server
 // curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:9001/copy
+// curl -X POST -d "app_version=0.0.1" http://api.easywyg.com/releases
 app.post(config.routes.copy, (req, res) => {
-  if (!req.params.url) {
+  if (!req.body.url) {
     res.status(500);
-    return res.json({ error : 'Should pass url parameter!' })
+    return res.json({ error : 'You should pass url parameter!' })
   }
 
   request
-    .get(req.params.url)
+    .get(req.body.url)
     .on('error', (err) => {
       res.status(500);
       return res.json({ error : err })
@@ -61,27 +66,7 @@ app.post(config.routes.copy, (req, res) => {
         return res.json({ error : 'Cannot read remote file!' })
       }
 
-      let extension = null;
-
-      switch (response.headers['content-type']) {
-        case 'image/jpeg':
-        case 'image/jpg':
-        case 'image/pjpeg':
-          extension = 'jpg';
-        break;
-        case 'image/png':
-          extension = 'png';
-        break;
-        case 'image/gif':
-          extension = 'gif';
-        break;
-        case 'image/bmp':
-          extension = 'bmp';
-        break;
-        case 'image/webp':
-          extension = 'webp';
-        break;
-      }
+      let extension = Utils.imageExtension(response.headers['content-type']);
 
       if (!extension) {
         res.status(500);
@@ -125,10 +110,13 @@ app.post(config.routes.upload, (req, res, next) => {
 
   const upload = multer({
     storage: storage,
+    limits: {
+      fieldSize: config.file.maxSize
+    },
     fileFilter: (req, file, cb) => {
       // Accept only images
       let isExtAllowed = /(?:jpe?g|gif|bmp|png|webp)$/.test(file.originalname);
-      let isMimeAllowed = /^image\/.+/i.test(file.mimetype);
+      let isMimeAllowed = /^image\/[^/]+$/i.test(file.mimetype);
 
       cb(null, isExtAllowed && isMimeAllowed);
     }

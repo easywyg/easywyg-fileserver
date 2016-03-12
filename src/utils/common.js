@@ -10,4 +10,30 @@ export default {
 
     return s;
   }
+
+  imageExtension: (mimeType) => {
+    let extension = null;
+
+    switch (mimeType) {
+      case 'image/jpeg':
+      case 'image/jpg':
+      case 'image/pjpeg':
+        extension = 'jpg';
+      break;
+      case 'image/png':
+        extension = 'png';
+      break;
+      case 'image/gif':
+        extension = 'gif';
+      break;
+      case 'image/bmp':
+        extension = 'bmp';
+      break;
+      case 'image/webp':
+        extension = 'webp';
+      break;
+    }
+
+    return extension;
+  }
 }
