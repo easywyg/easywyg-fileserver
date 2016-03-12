@@ -18,7 +18,6 @@
 import express    from 'express';
 import multer     from 'multer';
 import mkdirp     from 'mkdirp';
-import uuid       from 'node-uuid';
 import yaml       from 'js-yaml';
 import fs         from 'fs';
 import yargs      from 'yargs';
@@ -66,7 +65,7 @@ app.post(config.routes.copy, (req, res) => {
         return res.json({ error : 'Cannot read remote file!' })
       }
 
-      let extension = Utils.imageExtension(response.headers['content-type']);
+      let extension = utils.imageExtension(response.headers['content-type']);
 
       if (!extension) {
         res.status(500);
@@ -86,23 +85,14 @@ app.post(config.routes.upload, (req, res, next) => {
   // Define a storage
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      const now  = new Date();
-      const d    = now.getDate();
-      const m    = now.getMonth() + 1;
-      const y    = now.getFullYear();
-      const path = config.storage.path
-        .replace('%y', utils.pad(y))
-        .replace('%m', utils.pad(m))
-        .replace('%d', utils.pad(d));
-
+      const path = utils.composeDest(config.storage.path);
       mkdirp.sync(path);
       cb(null, path);
     },
     filename: (req, file, cb) => {
-      const ext = file.originalname.split('.').pop();
-      const filename = config.storage.filename
-        .replace('%name', uuid.v4())
-        .replace('%ext', ext);
+      const filename = utils.composeFilename(
+        file.originalname, config.storage.filename
+      );
 
       cb(null, filename);
     }

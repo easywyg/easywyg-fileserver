@@ -1,7 +1,9 @@
 'use strict';
 
+import uuid from 'node-uuid';
+
 export default {
-  pad: (num, size = 2) => {
+  pad(num, size = 2) => {
     let s = String(num);
 
     while (s.length < size) {
@@ -11,7 +13,7 @@ export default {
     return s;
   }
 
-  imageExtension: (mimeType) => {
+  imageExtension(mimeType) => {
     let extension = null;
 
     switch (mimeType) {
@@ -35,5 +37,25 @@ export default {
     }
 
     return extension;
+  }
+
+  composeDest(template) => {
+    const now  = new Date();
+    const d    = now.getDate();
+    const m    = now.getMonth() + 1;
+    const y    = now.getFullYear();
+
+    return template
+      .replace('%y', pad(y))
+      .replace('%m', pad(m))
+      .replace('%d', pad(d));
+  }
+
+  composeFilename(filename, template) => {
+    const ext = filename.split('.').pop();
+
+    return template
+      .replace('%name', uuid.v4())
+      .replace('%ext', ext);
   }
 }
