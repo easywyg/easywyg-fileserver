@@ -20,8 +20,10 @@ import yaml       from 'js-yaml';
 import fs         from 'fs';
 import yargs      from 'yargs';
 import request    from 'request';
-import * as utils from './utils/common';
 import bodyParser from 'body-parser';
+
+import * as utils from './utils/common';
+import Download   from './utils/download';
 
 // Check for --config argument
 const configPath = yargs.argv.config;
@@ -50,26 +52,11 @@ app.post(config.routes.copy, (req, res) => {
     return res.json({ error : 'You should pass url parameter!' })
   }
 
-  request
-    .get(req.body.url)
-    .on('error', (err) => {
-      res.status(500);
-      return res.json({ error : err })
-    })
-    .on('response', (response) => {
-      if (200 !== response.statusCode) {
-        res.status(500);
-        return res.json({ error : 'Cannot read remote file!' })
-      }
-
-      let extension = utils.imageExtension(response.headers['content-type']);
-
-      if (!extension) {
-        res.status(500);
-        return res.json({ error : 'File format is not allowed!' });
-      }
-    })
-    .pipe(fs.createWriteStream('doodle.png'));
+  const dl = new Download(config);
+  dl.download(req.body.url, (data) => {
+    console.log(data);
+    res.json(data);
+  });
 });
 
 // Upload image to local server
@@ -109,8 +96,7 @@ app.use((req, res) => {
 
   if (true === config.storage.xSendfileEnabled) {
     const reqPath = `/serve${req.path}`;
-    console.log('ACCEL');
-    console.log(reqPath);
+
     res.set(config.storage.xSendfileHeader, reqPath);
     res.end()
   } else {
@@ -125,5 +111,5 @@ app.use((req, res) => {
 
 // Run server
 app.listen(config.server.port, config.server.host, () => {
-  console.log(`Easywyg API runs on http://${config.server.host}:${config.server.port}`);
+  console.log(`Easywyg API running on http://${config.server.host}:${config.server.port}`);
 });
