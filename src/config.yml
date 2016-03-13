@@ -5,12 +5,12 @@ file:
   fieldName: 'file'
   maxSize: 100 # bytes
 storage:
-  root: '/media/tanraya/sandbox/commercial/easywyg/easywyg-fileserver'
+  root: '/tmp'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
-  url: 'http://localhost:9001'
+  url: 'http://uploads.easywygdev.com'
   xSendfileEnabled: true
-  xSendfileHeader: 'X-Accel-Reirect' # or X-Sendfile
+  xSendfileHeader: 'X-Accel-Redirect' # or X-Sendfile
 routes:
   upload: '/upload'
   copy: '/copy'

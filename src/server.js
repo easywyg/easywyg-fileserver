@@ -16,13 +16,11 @@
  */
 
 import express    from 'express';
-import multer     from 'multer';
-import mkdirp     from 'mkdirp';
 import yaml       from 'js-yaml';
 import fs         from 'fs';
 import yargs      from 'yargs';
 import request    from 'request';
-import utils      from './utils/common';
+import * as utils from './utils/common';
 import bodyParser from 'body-parser';
 
 // Check for --config argument
@@ -82,35 +80,7 @@ app.post(config.routes.copy, (req, res) => {
 // curl -F "file=@/home/tanraya/Pictures/1105121.jpg" -X POST http://localhost:9001/upload
 //
 app.post(config.routes.upload, (req, res, next) => {
-  // Define a storage
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const path = utils.composeDest(config.storage.path);
-      mkdirp.sync(path);
-      cb(null, path);
-    },
-    filename: (req, file, cb) => {
-      const filename = utils.composeFilename(
-        file.originalname, config.storage.filename
-      );
-
-      cb(null, filename);
-    }
-  });
-
-  const upload = multer({
-    storage: storage,
-    limits: {
-      fieldSize: config.file.maxSize
-    },
-    fileFilter: (req, file, cb) => {
-      // Accept only images
-      let isExtAllowed = /(?:jpe?g|gif|bmp|png|webp)$/.test(file.originalname);
-      let isMimeAllowed = /^image\/[^/]+$/i.test(file.mimetype);
-
-      cb(null, isExtAllowed && isMimeAllowed);
-    }
-  }).single(config.file.fieldName);
+  const upload = utils.upload(config);
 
   upload(req, res, (err) => {
     if (err) {
@@ -118,11 +88,9 @@ app.post(config.routes.upload, (req, res, next) => {
       return res.json({ error : err })
     }
 
-    const url = [config.storage.url, req.file.path].join('/');
-
     res.json({
       original : req.file.originalname,
-      url      : url,
+      url      : utils.composeURL(config, req.file.path),//url,
       size     : req.file.size,
       mimetype : req.file.mimetype
     });
@@ -140,16 +108,19 @@ app.post(config.routes.upload, (req, res, next) => {
 app.use((req, res) => {
   let path = [config.storage.root, req.path.replace(/^\/+/, '')].join('/');
 
-  if (fs.existsSync(path)) {
-    if (true === config.storage.xSendfileEnabled) {
-      res.set(config.storage.xSendfileHeader, req.path);
-      res.end()
-    } else {
-      res.sendFile(path);
-    }
+  if (true === config.storage.xSendfileEnabled) {
+    const reqPath = `/serve${req.path}`;
+    console.log('ACCEL');
+    console.log(reqPath);
+    res.set(config.storage.xSendfileHeader, reqPath);
+    res.end()
   } else {
-    res.status(404);
-    res.json({ error : 'File not found' });
+    if (fs.existsSync(path)) {
+      res.sendFile(path);
+    } else {
+      res.status(404);
+      res.json({ error : 'File not found' });
+    }
   }
 });
 
