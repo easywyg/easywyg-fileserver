@@ -44,7 +44,6 @@ app.get('/', (req, res) => {
 
 // Copy image from remote server to local server
 // curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:9001/copy
-// curl -X POST -d "app_version=0.0.1" http://api.easywyg.com/releases
 app.post(config.routes.copy, (req, res) => {
   if (!req.body.url) {
     res.status(500);

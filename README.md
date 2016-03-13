@@ -13,6 +13,7 @@ After installation, create `config.yml` somewhere in your filesystem and copy fo
 ### Example configuration
 
 ```yaml
+# ef-config.yml
 server:
   host: localhost
   port: 9001
@@ -34,7 +35,46 @@ routes:
 ### Running server
 
 ```bash
-$ easywyg-fileserver --config /path/to/config.yml
+$ easywyg-fileserver --config /path/to/ef-config.yml
+```
+
+### API
+
+#### Upload image
+```bash
+$ curl -F "file=@/tmp/image.jpg" -X POST http://localhost:9001/upload
+```
+
+You will get JSON response from server after upload image:
+
+```json
+{
+  "original":"image.jpg",
+  "url":"http://localhost:9001/uploads/2016/03/13/bcb41a31-62a9-47ac-9aa3-d7e946318477.jpg",
+  "size":131128,
+  "mimetype":"image/jpeg"
+}
+```
+
+#### Copy image from remote url
+```bash
+$ curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:9001/copy
+```
+
+You will get JSON response from server after copy image:
+
+```json
+{
+  "original":"googlelogo_color_272x92dp.png",
+  "url":"http://localhost:9001/uploads/2016/03/13/aab33b54-62a9-47ac-9aa3-d7e946318477.jpg",
+  "size":234865,
+  "mimetype":"image/png"
+}
+```
+
+#### Serve image
+```bash
+$ curl http://localhost:9001/uploads/2016/02/26/ae10175f-9a59-4998-8bea-4c5c4387ace7.jpg
 ```
 
 ### Using Easywyg Fileserver behind Nginx
@@ -78,6 +118,7 @@ server {
 This Nginx configuration work together with following Easywyg Fileserver configuration:
 
 ```yaml
+# ef-config.yml
 server:
   host: localhost
   port: 9001
