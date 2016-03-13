@@ -33,7 +33,7 @@ if (!configPath) {
 }
 
 const config = yaml.safeLoad(fs.readFileSync(configPath, 'utf8'));
-const pkg = JSON.parse(fs.readFileSync("./package.json", "utf8"));
+const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const app = express();
 
 app.use(bodyParser.json()); // support json encoded bodies
@@ -52,11 +52,18 @@ app.post(config.routes.copy, (req, res) => {
     return res.json({ error : 'You should pass url parameter!' })
   }
 
-  const dl = new Download(config);
-  dl.download(req.body.url, (data) => {
-    console.log(data);
+  const promise = (new Download(config)).download(req.body.url);
+
+  const reject = (data) => {
+    res.status(500);
     res.json(data);
-  });
+  }
+
+  const resolve = (data) => {
+    res.json(data);
+  }
+
+  promise.then(resolve, reject);
 });
 
 // Upload image to local server

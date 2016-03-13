@@ -1,8 +1,8 @@
-import path from 'path';
-import url  from 'url';
-import http from 'http';
-import fs   from 'fs';
-import mime from 'mime';
+import path   from 'path';
+import url    from 'url';
+import http   from 'http';
+import fs     from 'fs';
+import mime   from 'mime';
 import mkdirp from 'mkdirp';
 
 import * as utils from './common';
@@ -39,59 +39,70 @@ export default class Download {
   }
 
   download(remoteURL, cb = () => {}) {
-    if (this.redirects > 5) { console.log( 'Too many redirects' ) }
-
     const self = this;
-    const u = url.parse(remoteURL);
-    const filePath = self.localFile(path.basename(u.path));
 
-    const req = http.get(this.options(u), (res) => {
-      switch(res.statusCode) {
-        case 200:
-          self.contentLength = parseInt(res.headers['content-length']);
-          break;
-        case 302:
-          self.redirects += 1;
-          self.download(res.headers.location, cb);
-          return;
-          break;
-        case 404:
-          self.reset();
-          console.log("File Not Found");
-        default:
-          self.reset();
-          req.abort();
-          return;
-      }
+    return new Promise((resolve, reject) => {
+      if (self.redirects > 5) { reject({ error: 'Too many redirects' }) }
 
-      res.on('data', (chunk) => {
-        if (!self.file) {
-          self.file = fs.createWriteStream(filePath);
+      const u = url.parse(remoteURL);
+      const filePath = self.localFile(path.basename(u.path));
+
+      const req = http.get(self.options(u), (res) => {
+        switch(res.statusCode) {
+          case 200:
+            self.contentLength = parseInt(res.headers['content-length']);
+            break;
+          case 302:
+            self.redirects += 1;
+            return self.download(res.headers.location, cb);
+            break;
+          case 404:
+            self.reset();
+            reject({ error: "File Not Found" });
+          default:
+            reject({ error: `HTTP status is not supported: ${res.statusCode}` });
+            self.reset();
+            req.abort();
+            return;
         }
 
-        if (self.total < self.contentLength) {
-          self.file.write(chunk);
-          self.total += chunk.length;
+        if (!utils.imageExtension(res.headers['content-type'])) {
+          reject({ error: "Image format is not supported" });
         }
+
+        res.on('data', (chunk) => {
+          if (!self.file) { self.file = fs.createWriteStream(filePath) }
+
+          if (self.total < self.contentLength) {
+            self.file.write(chunk);
+            self.total += chunk.length;
+          }
+        });
+
+        res.on('end', () => {
+          const mimetype = mime.lookup(filePath);
+          const result = {
+            original : path.basename(u.path),
+            url      : utils.composeURL(self.config, filePath),
+            size     : self.total,
+            mimetype : mimetype
+          };
+
+          if (!utils.imageExtension(mimetype)) {
+            fs.unlinkSync(filePath);
+            reject({ error: "Image format is not supported" });
+          }
+
+          self.file.end();
+          self.reset();
+          resolve(result)
+        });
       });
 
-      res.on('end', () => {
-        const opts = {
-          original: path.basename(u.path),
-          url: utils.composeURL(this.config, filePath),
-          size: self.total,
-          mimetype: mime.lookup(filePath)
-        };
-
-        self.file.end();
+      req.on('error', (e) => {
         self.reset();
-        cb(opts);
+        resolve({ error: e.message });
       });
-    });
-
-    req.on('error', (e) => {
-      self.reset();
-      console.log("Got error: " + e.message);
-    });
+    })
   }
 }
