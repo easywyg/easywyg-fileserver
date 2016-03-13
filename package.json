@@ -1,7 +1,7 @@
 {
   "name": "easywyg-fileserver",
   "version": "0.1.0",
-  "description": "",
+  "description": "Fileserver for Easywyg rich text editor. Allow to upload images from Easywyg editor and serve them",
   "main": "lib/server.js",
   "scripts": {
     "watch": "babel -w -s -d lib/ src/",
