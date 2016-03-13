@@ -45,7 +45,7 @@ $ easywyg-fileserver --config /path/to/ef-config.yml
 $ curl -F "file=@/tmp/image.jpg" -X POST http://localhost:9001/upload
 ```
 
-You will get JSON response from server after upload image:
+You will get JSON response from the server after upload image:
 
 ```json
 {
@@ -61,7 +61,7 @@ You will get JSON response from server after upload image:
 $ curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:9001/copy
 ```
 
-You will get JSON response from server after copy image:
+You will get JSON response from the server after copy image:
 
 ```json
 {
@@ -75,6 +75,15 @@ You will get JSON response from server after copy image:
 #### Serve image
 ```bash
 $ curl http://localhost:9001/uploads/2016/02/26/ae10175f-9a59-4998-8bea-4c5c4387ace7.jpg
+```
+
+#### Error handling
+If any error occurs, you will get error response from the server and appropriate http status.
+
+```json
+{
+  "error":"File not found"
+}
 ```
 
 ### Using Easywyg Fileserver behind Nginx
