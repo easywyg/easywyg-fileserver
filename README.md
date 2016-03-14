@@ -24,9 +24,8 @@ storage:
   root: '/var/www/example.com/uploads'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
+serve:
   url: 'http://uploads.example.com'
-  xSendfileEnabled: false
-  xSendfileHeader: 'X-Accel-Redirect' # or X-Sendfile
 routes:
   upload: '/upload'
   copy: '/copy'
@@ -86,9 +85,9 @@ If any error occurs, you will get error response from the server and appropriate
 }
 ```
 
-### Using Easywyg Fileserver behind Nginx
+### Using Easywyg Fileserver behind Nginx. Serve files via Nginx.
 
-Take the following configuration to use Nginx as a front-end proxy and Easywyg Fileserver as a back-end. This configuration also supports `X-Accel-Redirect` to serve images via Nginx.
+Take the following configuration to use Nginx as a front-end proxy and Easywyg Fileserver as a back-end.
 
 ```
 server {
@@ -114,12 +113,6 @@ server {
         proxy_buffers              4 32k;
         proxy_busy_buffers_size    64k;
         proxy_temp_file_write_size 64k;
-
-    }
-
-    location /serve/ {
-        alias /tmp/;
-        internal;
     }
 }
 ```
@@ -138,9 +131,8 @@ storage:
   root: '/tmp'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
+serve:
   url: 'http://uploads.example.com'
-  xSendfileEnabled: true
-  xSendfileHeader: 'X-Accel-Redirect' # or X-Sendfile
 routes:
   upload: '/upload'
   copy: '/copy'

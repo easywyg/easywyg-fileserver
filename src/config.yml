@@ -1,16 +1,21 @@
 server:
-  host: 'localhost'
-  port: '9001'
+  host: localhost
+  port: 9001
+  gid: node
+  uid: node
+  pid: '/run/easywyg_fileserver.pid'
 file:
-  fieldName: 'file'
+  fieldName: file
   maxSize: 100 # bytes
 storage:
   root: '/tmp'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
-  url: 'http://uploads.easywygdev.com'
-  xSendfileEnabled: true
-  xSendfileHeader: 'X-Accel-Redirect' # or X-Sendfile
+serve:
+  # Serve images via fileserver itself.
+  # Turn off to serve images via web-server like Nginx.
+  enabled: true
+  url: 'http://uploads.lvh.me'
 routes:
   upload: '/upload'
   copy: '/copy'

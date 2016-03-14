@@ -62,7 +62,7 @@ export function composeFilename(filename, template) {
 
 export function composeURL(config, requestFilePath) {
   return [
-    config.storage.url,
+    config.serve.url,
     requestFilePath.replace(new RegExp(`^${config.storage.root}`), '')
   ].join('');
 }

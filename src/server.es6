@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 
 /**
@@ -26,9 +27,9 @@ import * as utils from './utils/common';
 import Download   from './utils/download';
 
 // Check for --config argument
-const configPath = yargs.argv.config;
+const configPath = yargs.argv.config || process.env.EF_CONFIG;
 if (!configPath) {
-  console.log('Error: you should pass --config option');
+  console.log('Error: you should pass --config option or EF_CONFIG env variable');
   process.exit();
 }
 
@@ -83,7 +84,7 @@ app.post(config.routes.upload, (req, res, next) => {
 
     res.json({
       original : req.file.originalname,
-      url      : utils.composeURL(config, req.file.path),//url,
+      url      : utils.composeURL(config, req.file.path),
       size     : req.file.size,
       mimetype : req.file.mimetype
     });
@@ -101,22 +102,18 @@ app.post(config.routes.upload, (req, res, next) => {
 app.use((req, res) => {
   let path = [config.storage.root, req.path.replace(/^\/+/, '')].join('/');
 
-  if (true === config.storage.xSendfileEnabled) {
-    const reqPath = `/serve${req.path}`;
-
-    res.set(config.storage.xSendfileHeader, reqPath);
-    res.end()
+  if (config.serve.enabled && fs.existsSync(path)) {
+    res.sendFile(path);
   } else {
-    if (fs.existsSync(path)) {
-      res.sendFile(path);
-    } else {
-      res.status(404);
-      res.json({ error : 'File not found' });
-    }
+    res.status(404);
+    res.json({ error : 'File not found' });
   }
 });
 
 // Run server
 app.listen(config.server.port, config.server.host, () => {
+  //process.setgid(config.server.gid);
+  //process.setuid(config.server.uid);
+
   console.log(`Easywyg API running on http://${config.server.host}:${config.server.port}`);
 });

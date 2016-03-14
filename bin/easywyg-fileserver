@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+
+//require.paths.push('../node_modules');
+require('../lib/server');
