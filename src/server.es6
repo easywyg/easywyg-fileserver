@@ -34,7 +34,6 @@ if (!configPath) {
 }
 
 const config = yaml.safeLoad(fs.readFileSync(configPath, 'utf8'));
-const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const app = express();
 
 app.use(bodyParser.json()); // support json encoded bodies
@@ -42,11 +41,11 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 // Fileserver welcome screen
 app.get('/', (req, res) => {
-  res.json({ message: `Welcome to Easywyg Fileserver v${pkg.version}` });
+  res.json({ message: `Welcome to Easywyg Fileserver!` });
 });
 
 // Copy image from remote server to local server
-// curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:9001/copy
+// curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:12320/copy
 app.post(config.routes.copy, (req, res) => {
   if (!req.body.url) {
     res.status(500);
@@ -71,7 +70,7 @@ app.post(config.routes.copy, (req, res) => {
 //
 // Example:
 //
-// curl -F "file=@/home/tanraya/Pictures/1105121.jpg" -X POST http://localhost:9001/upload
+// curl -F "file=@/home/tanraya/Pictures/1105121.jpg" -X POST http://localhost:12320/upload
 //
 app.post(config.routes.upload, (req, res, next) => {
   const upload = utils.upload(config);
@@ -95,7 +94,7 @@ app.post(config.routes.upload, (req, res, next) => {
 //
 // Example:
 //
-// curl http://localhost:9001/uploads/2016/02/26/ae10175f-9a59-4998-8bea-4c5c4387ace7.jpg
+// curl http://localhost:12320/uploads/2016/02/26/ae10175f-9a59-4998-8bea-4c5c4387ace7.jpg
 //
 // If file not found it set http status 404 and return JSON response with error.
 //

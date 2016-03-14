@@ -1,9 +1,6 @@
 server:
   host: localhost
-  port: 9001
-  gid: node
-  uid: node
-  pid: '/run/easywyg_fileserver.pid'
+  port: 12320
 file:
   fieldName: file
   maxSize: 100 # bytes

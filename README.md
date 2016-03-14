@@ -16,7 +16,7 @@ After installation, create `config.yml` somewhere in your filesystem and copy fo
 # ef-config.yml
 server:
   host: localhost
-  port: 9001
+  port: 12320
 file:
   fieldName: file
   maxSize: 10000000 # bytes
@@ -41,7 +41,7 @@ $ easywyg-fileserver --config /path/to/ef-config.yml
 
 #### Upload image
 ```bash
-$ curl -F "file=@/tmp/image.jpg" -X POST http://localhost:9001/upload
+$ curl -F "file=@/tmp/image.jpg" -X POST http://localhost:12320/upload
 ```
 
 You will get JSON response from the server after upload image:
@@ -49,7 +49,7 @@ You will get JSON response from the server after upload image:
 ```json
 {
   "original":"image.jpg",
-  "url":"http://localhost:9001/uploads/2016/03/13/bcb41a31-62a9-47ac-9aa3-d7e946318477.jpg",
+  "url":"http://localhost:12320/uploads/2016/03/13/bcb41a31-62a9-47ac-9aa3-d7e946318477.jpg",
   "size":131128,
   "mimetype":"image/jpeg"
 }
@@ -57,7 +57,7 @@ You will get JSON response from the server after upload image:
 
 #### Copy image from remote url
 ```bash
-$ curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:9001/copy
+$ curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:12320/copy
 ```
 
 You will get JSON response from the server after copy image:
@@ -65,7 +65,7 @@ You will get JSON response from the server after copy image:
 ```json
 {
   "original":"googlelogo_color_272x92dp.png",
-  "url":"http://localhost:9001/uploads/2016/03/13/aab33b54-62a9-47ac-9aa3-d7e946318477.jpg",
+  "url":"http://localhost:12320/uploads/2016/03/13/aab33b54-62a9-47ac-9aa3-d7e946318477.jpg",
   "size":234865,
   "mimetype":"image/png"
 }
@@ -73,7 +73,7 @@ You will get JSON response from the server after copy image:
 
 #### Serve image
 ```bash
-$ curl http://localhost:9001/uploads/2016/02/26/ae10175f-9a59-4998-8bea-4c5c4387ace7.jpg
+$ curl http://localhost:12320/uploads/2016/02/26/ae10175f-9a59-4998-8bea-4c5c4387ace7.jpg
 ```
 
 #### Error handling
@@ -85,6 +85,18 @@ If any error occurs, you will get error response from the server and appropriate
 }
 ```
 
+### init.d script
+
+Copy [sample init.d script](https://github.com/easywyg/easywyg-fileserver/tree/master/init.d/easywyg-fileserver) into `/etc/init.d/easywyg-fileserver` then configure it.
+After making necessary settings, execute following commands:
+
+```bash
+$ sudo chmod +x /etc/init.d/easywyg-fileserver
+$ sudo update-rc.d easywyg-fileserver defaults
+```
+
+Now you can run/stop fileserver using `service easywyg-fileserver start` and `service easywyg-fileserver stop`.
+
 ### Using Easywyg Fileserver behind Nginx. Serve files via Nginx.
 
 Take the following configuration to use Nginx as a front-end proxy and Easywyg Fileserver as a back-end.
@@ -95,7 +107,7 @@ server {
     server_name uploads.example.com;
 
     location / {
-        proxy_pass         http://127.0.0.1:9001/;
+        proxy_pass         http://127.0.0.1:12320/;
         proxy_redirect     off;
 
         proxy_set_header   Host             $host;
@@ -123,7 +135,7 @@ This Nginx configuration work together with following Easywyg Fileserver configu
 # ef-config.yml
 server:
   host: localhost
-  port: 9001
+  port: 12320
 file:
   fieldName: file
   maxSize: 10000000 # bytes
