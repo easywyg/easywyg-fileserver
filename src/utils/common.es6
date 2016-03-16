@@ -1,7 +1,6 @@
 'use strict';
 
 import uuid from 'node-uuid';
-import multer from 'multer';
 import mkdirp from 'mkdirp';
 
 export function pad(num, size = 2) {
@@ -65,37 +64,4 @@ export function composeURL(config, requestFilePath) {
     config.serve.url,
     requestFilePath.replace(new RegExp(`^${config.storage.root}`), '')
   ].join('');
-}
-
-export function upload(config) {
-  // Define a storage
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const path = [config.storage.root, composeDest(config.storage.path)].join('/');
-
-      mkdirp.sync(path);
-      cb(null, path);
-    },
-    filename: (req, file, cb) => {
-      const filename = composeFilename(
-        file.originalname, config.storage.filename
-      );
-
-      cb(null, filename);
-    }
-  });
-
-  return multer({
-    storage: storage,
-    limits: {
-      fieldSize: config.file.maxSize
-    },
-    fileFilter: (req, file, cb) => {
-      // Accept only images
-      const isExtAllowed = /(?:jpe?g|gif|bmp|png|webp)$/.test(file.originalname);
-      const isMimeAllowed = /^image\/[^/]+$/i.test(file.mimetype);
-
-      cb(null, isExtAllowed && isMimeAllowed);
-    }
-  }).single(config.file.fieldName);
 }

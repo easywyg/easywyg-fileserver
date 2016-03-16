@@ -1,3 +1,5 @@
+'use strict';
+
 import path   from 'path';
 import url    from 'url';
 import http   from 'http';
@@ -42,7 +44,7 @@ export default class Download {
     const self = this;
 
     return new Promise((resolve, reject) => {
-      if (self.redirects > 5) { reject({ error: 'Too many redirects' }) }
+      if (self.redirects > 5) { reject({ error: 'Too many redirects', code: 'MANY_REDIRECTS' }) }
 
       const u = url.parse(remoteURL);
       const filePath = self.localFile(path.basename(u.path));
@@ -58,22 +60,22 @@ export default class Download {
             break;
           case 404:
             self.reset();
-            reject({ error: "File Not Found" });
+            reject({ error: 'File Not Found', code: 'NOT_FOUND' });
           default:
-            reject({ error: `HTTP status is not supported: ${res.statusCode}` });
+            reject({ error: `HTTP status is not supported: ${res.statusCode}`, code: 'WRONG_STATUS' });
             self.reset();
             req.abort();
             return;
         }
 
         if (!utils.imageExtension(res.headers['content-type'])) {
-          reject({ error: "Image format is not supported" });
+          reject({ error: 'Image format is not supported', code: 'WRONG_IMG_FORMAT' });
         }
 
         res.on('data', (chunk) => {
           if (!self.file) { self.file = fs.createWriteStream(filePath) }
 
-          if (self.total < self.contentLength) {
+          if (self.total < self.contentLength && self.total < self.config.storage.fileMaxSize) {
             self.file.write(chunk);
             self.total += chunk.length;
           }
@@ -90,7 +92,7 @@ export default class Download {
 
           if (!utils.imageExtension(mimetype)) {
             fs.unlinkSync(filePath);
-            reject({ error: "Image format is not supported" });
+            reject({ error: 'Image format is not supported', code: 'WRONG_IMG_FORMAT' });
           }
 
           self.file.end();

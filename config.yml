@@ -1,18 +1,13 @@
 server:
   host: localhost
   port: 12320
-file:
-  fieldName: file
-  maxSize: 100 # bytes
 storage:
   root: '/tmp'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
+  fileMaxSize: 100 #5242880 # 5 megabytes
 serve:
   # Serve images via fileserver itself.
   # Turn off to serve images via web-server like Nginx.
   enabled: true
-  url: 'http://uploads.lvh.me'
-routes:
-  upload: '/upload'
-  copy: '/copy'
+  url: 'http://lvh.me:12320'

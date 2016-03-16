@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 'use strict';
 
 /**
@@ -6,25 +5,18 @@
  *
  * POST /upload - Upload an image
  * POST /copy - Download image from remote URL
- *
- * NEXT:
- * - Add filter to only images uploads
- * - Config as separate file
- * - Move some functions to utils
- * - Json response when error or 404 occurs
- * - Json response after file uploaded
- * - Print API version in /
  */
 
-import express    from 'express';
+import http       from 'http';
+import url        from 'url';
 import yaml       from 'js-yaml';
 import fs         from 'fs';
 import yargs      from 'yargs';
-import request    from 'request';
-import bodyParser from 'body-parser';
+import mime       from 'mime';
 
 import * as utils from './utils/common';
 import Download   from './utils/download';
+import Upload     from './utils/upload';
 
 // Check for --config argument
 const configPath = yargs.argv.config || process.env.EF_CONFIG;
@@ -34,85 +26,72 @@ if (!configPath) {
 }
 
 const config = yaml.safeLoad(fs.readFileSync(configPath, 'utf8'));
-const app = express();
+const corsOpts = { origin: true, preflightContinue: false };
 
-app.use(bodyParser.json()); // support json encoded bodies
-app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+http.createServer((req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'origin, content-type, accept, x-client-id');
 
-// Fileserver welcome screen
-app.get('/', (req, res) => {
-  res.json({ message: `Welcome to Easywyg Fileserver!` });
-});
+  const method = req.method.toLowerCase();
+  const path   = req.url;
+  const params = url.parse(req.url,true).query;
 
-// Copy image from remote server to local server
-// curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:12320/copy
-app.post(config.routes.copy, (req, res) => {
-  if (!req.body.url) {
-    res.status(500);
-    return res.json({ error : 'You should pass url parameter!' })
+  const json = (res, data, status = 200) => {
+    res.writeHead(status, { 'content-type': 'application/json' });
+
+    if (data) {
+      res.end(JSON.stringify(data));
+    } else {
+      res.end();
+    }
   }
 
-  const promise = (new Download(config)).download(req.body.url);
+  // Upload image to local server
+  //
+  // Example:
+  //
+  // curl -F "file=@/home/tanraya/Pictures/1105121.jpg" -X POST http://localhost:12320/upload
+  //
+  if ('/upload' == path && 'post' == method) {
+    const promise = (new Upload(config)).upload(req);
+    const reject  = (data) => { json(res, data, 400) };
+    const resolve = (data) => { json(res, data) };
 
-  const reject = (data) => {
-    res.status(500);
-    res.json(data);
+    promise.then(resolve, reject);
   }
 
-  const resolve = (data) => {
-    res.json(data);
-  }
-
-  promise.then(resolve, reject);
-});
-
-// Upload image to local server
-//
-// Example:
-//
-// curl -F "file=@/home/tanraya/Pictures/1105121.jpg" -X POST http://localhost:12320/upload
-//
-app.post(config.routes.upload, (req, res, next) => {
-  const upload = utils.upload(config);
-
-  upload(req, res, (err) => {
-    if (err) {
-      res.status(500);
-      return res.json({ error : err })
+  // Copy image from remote server to local server
+  // curl -X POST -d "url=https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" http://localhost:12320/copy
+  else if ('/copy' == path && 'post' == method) {
+    if (!params.url) {
+      json(res, { error : 'You should pass url parameter!' }, 400)
     }
 
-    res.json({
-      original : req.file.originalname,
-      url      : utils.composeURL(config, req.file.path),
-      size     : req.file.size,
-      mimetype : req.file.mimetype
-    });
-  });
-});
+    const promise = (new Download(config)).download(req.body.url);
+    const reject  = (data) => { json(res, data, 400) };
+    const resolve = (data) => { json(res, data) };
 
-// Load image from storage
-//
-// Example:
-//
-// curl http://localhost:12320/uploads/2016/02/26/ae10175f-9a59-4998-8bea-4c5c4387ace7.jpg
-//
-// If file not found it set http status 404 and return JSON response with error.
-//
-app.use((req, res) => {
-  let path = [config.storage.root, req.path.replace(/^\/+/, '')].join('/');
-
-  if (config.serve.enabled && fs.existsSync(path)) {
-    res.sendFile(path);
-  } else {
-    res.status(404);
-    res.json({ error : 'File not found' });
+    promise.then(resolve, reject);
   }
-});
 
-// Run server
-app.listen(config.server.port, config.server.host, () => {
-  //process.setgid(config.server.gid);
-  //process.setuid(config.server.uid);
+  // Support options request
+  else if (['/upload', '/copy'].some(x => x == path) && 'options' == method) {
+    json(res)
+  }
 
-  console.log(`Easywyg API running on http://${config.server.host}:${config.server.port}`);
-});
+  // Serve files
+  else {
+    const filePath = [config.storage.root, req.url.replace(/^\/+/, '')].join('/');
+
+    if (config.serve.enabled && fs.existsSync(filePath)) {
+      res.writeHead(200, {
+        'Content-Type': mime.lookup(filePath),
+        'Content-Length': fs.statSync(filePath)['size'],
+      });
+
+      fs.createReadStream(filePath, 'utf-8').pipe(res);
+    } else {
+      json(res, { error: 'File not found' }, 404)
+    }
+  }
+}).listen(config.server.port, config.server.host);
