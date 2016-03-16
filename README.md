@@ -33,6 +33,11 @@ serve:
 ```bash
 $ easywyg-fileserver --config /path/to/ef-config.yml
 ```
+or with ENV variable
+
+```bash
+$ EF_CONFIG=/path/to/ef-config.yml easywyg-fileserver
+```
 
 ### API
 
