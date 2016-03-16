@@ -15,20 +15,17 @@ After installation, create `config.yml` somewhere in your filesystem and copy fo
 ```yaml
 # ef-config.yml
 server:
-  host: localhost
+  host: example.com
   port: 12320
-file:
-  fieldName: file
-  maxSize: 10000000 # bytes
 storage:
   root: '/var/www/example.com/uploads'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
+  maxFileSize: 5242880 # 5 megabytes
 serve:
-  url: 'http://uploads.example.com'
-routes:
-  upload: '/upload'
-  copy: '/copy'
+  # Serve images via fileserver itself.
+  # Note: Better use Nginx for that on production.
+  url: 'http://fileserver.example.com'
 ```
 
 ### Running server
@@ -104,7 +101,7 @@ Take the following configuration to use Nginx as a front-end proxy and Easywyg F
 ```
 server {
     listen 80;
-    server_name uploads.example.com;
+    server_name fileserver.example.com;
 
     location / {
         proxy_pass         http://127.0.0.1:12320/;
@@ -134,18 +131,15 @@ This Nginx configuration work together with following Easywyg Fileserver configu
 ```yaml
 # ef-config.yml
 server:
-  host: localhost
+  host: example.com
   port: 12320
-file:
-  fieldName: file
-  maxSize: 10000000 # bytes
 storage:
   root: '/tmp'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
+  maxFileSize: 5242880 # 5 megabytes
 serve:
-  url: 'http://uploads.example.com'
-routes:
-  upload: '/upload'
-  copy: '/copy'
+  # Serve images via fileserver itself.
+  # Note: Better use Nginx for that on production.
+  url: 'http://fileserver.example.com'
 ```
