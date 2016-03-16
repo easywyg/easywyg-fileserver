@@ -5,9 +5,8 @@ storage:
   root: '/tmp'
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
-  fileMaxSize: 100 #5242880 # 5 megabytes
+  fileMaxSize: 5242880 # 5 megabytes
 serve:
   # Serve images via fileserver itself.
-  # Turn off to serve images via web-server like Nginx.
-  enabled: true
+  # Note: Better use Nginx for that on production.
   url: 'http://lvh.me:12320'

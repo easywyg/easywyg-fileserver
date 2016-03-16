@@ -83,7 +83,7 @@ http.createServer((req, res) => {
   else {
     const filePath = [config.storage.root, req.url.replace(/^\/+/, '')].join('/');
 
-    if (config.serve.enabled && fs.existsSync(filePath)) {
+    if (fs.existsSync(filePath)) {
       res.writeHead(200, {
         'Content-Type': mime.lookup(filePath),
         'Content-Length': fs.statSync(filePath)['size'],
