@@ -23,9 +23,10 @@ storage:
   filename: '%name.%ext'
   maxFileSize: 5242880 # 5 megabytes
 serve:
-  # Serve images via fileserver itself.
-  # Note: Better use Nginx for that on production.
-  url: 'http://fileserver.example.com'
+  enabled: false
+  via: 'fileserver' # or 'webserver'
+  # When serve via webserver
+  xSendfileHeader: 'X-Accel-Redirect' # or X-Sendfile
 ```
 
 ### Running server
@@ -105,7 +106,7 @@ Take the following configuration to use Nginx as a front-end proxy and Easywyg F
 
 ```
 server {
-    listen 80;
+    listen <YOUR_SERVER_IP>:80;
     server_name fileserver.example.com;
 
     location / {
@@ -128,6 +129,11 @@ server {
         proxy_busy_buffers_size    64k;
         proxy_temp_file_write_size 64k;
     }
+
+    location /serve/ {
+       alias /home/example.com/shared/public/uploads/;
+       internal;
+    }
 }
 ```
 
@@ -144,7 +150,8 @@ storage:
   filename: '%name.%ext'
   maxFileSize: 5242880 # 5 megabytes
 serve:
-  # Serve images via fileserver itself.
-  # Note: Better use Nginx for that on production.
-  url: ''
+  enabled: true
+  via: 'webserver' # or 'fileserver'
+  # When serve via webserver
+  xSendfileHeader: 'X-Accel-Redirect' # or X-Sendfile
 ```

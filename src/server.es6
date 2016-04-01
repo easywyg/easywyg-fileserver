@@ -28,7 +28,7 @@ if (!configPath) {
 const config = yaml.safeLoad(fs.readFileSync(configPath, 'utf8'));
 const corsOpts = { origin: true, preflightContinue: false };
 
-http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'origin, content-type, accept, x-client-id');
 
@@ -79,19 +79,35 @@ http.createServer((req, res) => {
     json(res)
   }
 
-  // Serve files
-  else {
-    const filePath = [config.storage.root, req.url.replace(/^\/+/, '')].join('/');
+  // Welcome screen
+  else if ('/' == path) {
+    json(res, { message: 'Welcome to Easywyg Fileserver!' })
+  }
 
-    if (fs.existsSync(filePath)) {
+  // Serve files
+  else if (config.serve.enabled) {
+    const filePath = [config.storage.root, path.replace(/^\/+/, '')].join('/');
+
+    // Serving by fileserver itself
+    if ('fileserver' == config.serve.via && fs.existsSync(filePath) && fs.lstatSync(filePath).isFile()) {
       res.writeHead(200, {
         'Content-Type': mime.lookup(filePath),
         'Content-Length': fs.statSync(filePath)['size'],
       });
 
       fs.createReadStream(filePath, 'utf-8').pipe(res);
-    } else {
+    }
+    // Serve via Nginx or Apache
+    else if ('webserver' == config.serve.via)
+      res.set(config.serve.xSendfileHeader, `/serve/${path}`);
+      res.end()
+    else {
       json(res, { error: 'File not found' }, 404)
     }
   }
 }).listen(config.server.port, config.server.host);
+
+server.on('error', (e) => {
+  // Handle your error here
+  console.log(e);
+});

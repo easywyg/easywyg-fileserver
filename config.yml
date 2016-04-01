@@ -6,7 +6,9 @@ storage:
   path: 'uploads/%y/%m/%d'
   filename: '%name.%ext'
   fileMaxSize: 5242880 # 5 megabytes
+# Serve images via fileserver itself.
+# Note: Better use Nginx for that on production.
 serve:
-  # Serve images via fileserver itself.
-  # Note: Better use Nginx for that on production.
-  url: 'http://easywygdev.me'
+  enabled: false
+  via: 'webserver' # or 'fileserver'
+  xSendfileHeader: 'X-Accel-Redirect' # or X-Sendfile (when serve via webserver)
