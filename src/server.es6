@@ -98,10 +98,10 @@ const server = http.createServer((req, res) => {
       fs.createReadStream(filePath, 'utf-8').pipe(res);
     }
     // Serve via Nginx or Apache
-    else if ('webserver' == config.serve.via)
+    else if ('webserver' == config.serve.via) {
       res.set(config.serve.xSendfileHeader, `/serve/${path}`);
       res.end()
-    else {
+    } else {
       json(res, { error: 'File not found' }, 404)
     }
   }
