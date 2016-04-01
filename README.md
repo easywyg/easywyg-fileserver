@@ -136,7 +136,7 @@ This Nginx configuration work together with following Easywyg Fileserver configu
 ```yaml
 # ef-config.yml
 server:
-  host: example.com
+  host: localhost
   port: 12320
 storage:
   root: '/tmp'
@@ -146,5 +146,5 @@ storage:
 serve:
   # Serve images via fileserver itself.
   # Note: Better use Nginx for that on production.
-  url: 'http://fileserver.example.com'
+  url: ''
 ```
